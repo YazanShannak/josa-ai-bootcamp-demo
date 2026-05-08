@@ -13,7 +13,7 @@ cp .env.example .env   # fill in API keys (only needed for AI levels)
 ## Run
 
 ```bash
-uv run uvicorn main:app --reload
+uv run uvicorn src.main:app --reload
 ```
 
 Open http://localhost:8000
