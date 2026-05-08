@@ -3,7 +3,7 @@ from datetime import date
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from ai.chatbot import agent
+from ..ai.chatbot import agent
 
 router = APIRouter(prefix="/api")
 

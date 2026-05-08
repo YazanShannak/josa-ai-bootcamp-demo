@@ -6,10 +6,10 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from database import init_db
-from routes.analytics import router as analytics_router
-from routes.expenses import router as expenses_router
-from routes.chat import router as chat_router
+from .database import init_db
+from .routes.analytics import router as analytics_router
+from .routes.expenses import router as expenses_router
+from .routes.chat import router as chat_router
 
 app = FastAPI(title="Othman Demo")
 

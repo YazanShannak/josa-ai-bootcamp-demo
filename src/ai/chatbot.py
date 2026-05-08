@@ -1,6 +1,6 @@
 from pydantic_ai import Agent
-from ai.shared import get_model
-from database import get_db
+from .shared import get_model
+from ..database import get_db
 
 agent = Agent(
     get_model(),

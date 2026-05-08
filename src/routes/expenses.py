@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
-from models import Expense, ExpenseCreate, ExpenseUpdate, CATEGORIES
-from database import get_db
+from ..models import Expense, ExpenseCreate, ExpenseUpdate, CATEGORIES
+from ..database import get_db
 
 router = APIRouter(prefix="/api")
 
