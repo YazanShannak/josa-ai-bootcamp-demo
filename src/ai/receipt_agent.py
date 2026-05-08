@@ -16,7 +16,7 @@ class ExpenseExtraction(BaseModel):
 
 _agent = Agent(
     get_model(),
-    result_type=ExpenseExtraction,
+    output_type=ExpenseExtraction,
     system_prompt=(
         f"Extract expense details from the provided receipt image or text transcript. "
         f"category MUST be one of: {', '.join(CATEGORIES)}. "
