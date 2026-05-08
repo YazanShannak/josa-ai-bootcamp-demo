@@ -1,7 +1,7 @@
 [project]
 name = "othman-josa-demo"
 version = "0.1.0"
-description = "Add your description here"
+description = "Expense tracker — AI bootcamp demo"
 requires-python = ">=3.14"
 dependencies = [
     "fastapi>=0.136.1",
