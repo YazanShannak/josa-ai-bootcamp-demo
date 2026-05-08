@@ -151,6 +151,35 @@
       </div>
     </div>
 
+    <!-- ── Chat Tab ── -->
+    <div v-else-if="activeTab === 'chat'" class="flex flex-col h-[calc(100vh-10rem)]">
+      <div ref="chatBox" class="flex-1 overflow-y-auto space-y-4 mb-4 bg-white rounded-lg border p-4">
+        <div v-if="chatMessages.length === 0" class="text-center text-gray-400 py-10">
+          Ask me anything about your expenses — "how much did I spend on food this month?"
+        </div>
+        <div v-for="(msg, i) in chatMessages" :key="i"
+          :class="['flex', msg.role === 'user' ? 'justify-end' : 'justify-start']">
+          <div :class="['max-w-[80%] rounded-lg px-4 py-2.5 text-sm whitespace-pre-wrap',
+            msg.role === 'user'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-800']">
+            {{ msg.content }}
+          </div>
+        </div>
+        <div v-if="chatLoading" class="flex justify-start">
+          <div class="bg-gray-100 rounded-lg px-4 py-2.5 text-sm text-gray-500 animate-pulse">Thinking…</div>
+        </div>
+      </div>
+      <form @submit.prevent="sendChatMessage" class="flex gap-2">
+        <input v-model="chatInput" type="text" placeholder="Ask about your expenses…" :disabled="chatLoading"
+          class="flex-1 border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:opacity-50" />
+        <button type="submit" :disabled="chatLoading || !chatInput.trim()"
+          class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          Send
+        </button>
+      </form>
+    </div>
+
     <!-- ── Analytics Tab ── -->
     <div v-else-if="activeTab === 'analytics'">
       <div v-if="summary.by_category.length === 0" class="bg-white rounded-lg border p-10 text-center text-gray-400">
@@ -194,6 +223,7 @@ createApp({
       { id: 'expenses',  label: 'Expenses' },
       { id: 'form',      label: 'Add Expense' },
       { id: 'analytics', label: 'Analytics' },
+      { id: 'chat',      label: 'Chat' },
     ];
 
     const expenses  = ref([]);
@@ -201,6 +231,10 @@ createApp({
     const filters   = reactive({ category: '', from: '', to: '' });
     const form      = reactive({ id: null, amount: '', date: '', description: '', category: '', merchant: '', notes: '', attachment_path: '' });
     const summary   = reactive({ by_category: [], monthly: [] });
+    const chatMessages = ref([]);
+    const chatInput  = ref('');
+    const chatLoading = ref(false);
+    const chatBox    = ref(null);
 
     let categoryChart = null;
 
@@ -294,6 +328,45 @@ createApp({
       Object.assign(form, { id: null, amount: '', date: '', description: '', category: '', merchant: '', notes: '', attachment_path: '' });
     }
 
+    async function sendChatMessage() {
+      const text = chatInput.value.trim();
+      if (!text || chatLoading.value) return;
+      chatMessages.value.push({ role: 'user', content: text });
+      chatInput.value = '';
+      chatLoading.value = true;
+      const assistantMsg = { role: 'assistant', content: '' };
+      chatMessages.value.push(assistantMsg);
+      await nextTick();
+      if (chatBox.value) chatBox.value.scrollTop = chatBox.value.scrollHeight;
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text }),
+        });
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop();
+          for (const part of parts) {
+            if (!part.startsWith('data: ')) continue;
+            const data = part.slice(6).trim();
+            if (data === '[DONE]') break;
+            try { assistantMsg.content += JSON.parse(data).text ?? ''; } catch {}
+          }
+          await nextTick();
+          if (chatBox.value) chatBox.value.scrollTop = chatBox.value.scrollHeight;
+        }
+      } finally {
+        chatLoading.value = false;
+      }
+    }
+
     function switchTab(tab) {
       activeTab.value = tab;
       if (tab === 'analytics') loadSummary();
@@ -307,7 +380,8 @@ createApp({
 
     return {
       activeTab, tabs, expenses, categories, filters, form, summary,
-      loadExpenses, clearFilters, editExpense, deleteExpense, submitForm, resetForm, switchTab,
+      chatMessages, chatInput, chatLoading, chatBox,
+      loadExpenses, clearFilters, editExpense, deleteExpense, submitForm, resetForm, switchTab, sendChatMessage,
     };
   },
 }).mount('#app');
