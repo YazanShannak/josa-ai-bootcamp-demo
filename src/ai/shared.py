@@ -5,5 +5,5 @@ from pydantic_ai.providers.openrouter import OpenRouterProvider
 load_dotenv()
 
 
-def get_model(model_name: str = "openai/gpt-4o") -> OpenRouterModel:
+def get_model(model_name: str = "deepseek/deepseek-v4-flash") -> OpenRouterModel:
     return OpenRouterModel(model_name, provider=OpenRouterProvider())
